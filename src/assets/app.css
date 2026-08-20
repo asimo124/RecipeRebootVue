@@ -1,0 +1,136 @@
+/* App-level responsive overrides (Admina CSS is precompiled / purged) */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#app {
+  min-width: 0;
+}
+
+body.modal-open,
+body.sidebar-open {
+  overflow: hidden;
+}
+
+/* ----- Mobile chrome ----- */
+@media (max-width: 1199px) {
+  .navbar-header {
+    padding-left: 4.25rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .dashboard-main-body {
+    padding: 0.75rem !important;
+  }
+
+  .d-footer {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Slimmer off-canvas nav: hide icon rail, keep menu panel */
+  .twin-sidebar .twin-rail {
+    display: none;
+  }
+
+  .twin-sidebar {
+    width: min(18rem, 86vw);
+  }
+
+  .twin-sidebar .twin-panel {
+    width: 100%;
+  }
+
+  .twin-mobile-toggle {
+    top: 12px;
+    left: 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  .page-crumb-trail {
+    display: none;
+  }
+
+  .card-header {
+    gap: 0.75rem;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .recipe-modal-panel {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+    max-width: 100% !important;
+  }
+
+  .ingredient-picker {
+    max-width: 100% !important;
+  }
+
+  .lookup-add-form {
+    width: 100%;
+  }
+
+  .lookup-add-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* Mobile card rows */
+.mobile-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobile-card-item {
+  border: 1px solid rgb(235 236 239);
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 0.875rem 1rem;
+}
+
+.dark .mobile-card-item {
+  border-color: rgb(75 85 99);
+  background: rgb(55 65 81);
+}
+
+.mobile-card-item__title {
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  word-break: break-word;
+}
+
+.mobile-card-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.dark .mobile-card-item__meta {
+  color: #d1d5db;
+}
+
+.mobile-card-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
