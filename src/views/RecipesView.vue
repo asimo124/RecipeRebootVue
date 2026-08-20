@@ -15,7 +15,6 @@ const form = reactive({
   title: '',
   protein_id: '',
   recipe_style_id: '',
-  contains_gluten: false,
   last_date_made: '',
   recipe_link: '',
   image_path: '',
@@ -38,7 +37,6 @@ function resetForm() {
   form.title = ''
   form.protein_id = ''
   form.recipe_style_id = ''
-  form.contains_gluten = false
   form.last_date_made = ''
   form.recipe_link = ''
   form.image_path = ''
@@ -58,7 +56,6 @@ async function openEdit(row) {
   form.title = full.title || ''
   form.protein_id = full.protein_id ?? ''
   form.recipe_style_id = full.recipe_style_id ?? ''
-  form.contains_gluten = !!full.contains_gluten
   form.last_date_made = full.last_date_made || ''
   form.recipe_link = full.recipe_link || ''
   form.image_path = full.image_path || ''
@@ -101,7 +98,6 @@ async function save() {
       title: form.title.trim(),
       protein_id: form.protein_id || null,
       recipe_style_id: form.recipe_style_id || null,
-      contains_gluten: !!form.contains_gluten,
       last_date_made: form.last_date_made || null,
       recipe_link: form.recipe_link || null,
       image_path: form.image_path || null,
@@ -304,21 +300,13 @@ async function removeRecipe(id) {
                 </select>
               </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium mb-1">Last date made</label>
-                <input
-                  v-model="form.last_date_made"
-                  type="date"
-                  class="bg-white dark:bg-dark-2 border-neutral-200 dark:border-neutral-500 rounded-lg w-full"
-                />
-              </div>
-              <div class="flex items-end pb-2">
-                <label class="inline-flex items-center gap-2">
-                  <input v-model="form.contains_gluten" type="checkbox" class="form-check-input" />
-                  Contains gluten
-                </label>
-              </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Last date made</label>
+              <input
+                v-model="form.last_date_made"
+                type="date"
+                class="bg-white dark:bg-dark-2 border-neutral-200 dark:border-neutral-500 rounded-lg w-full max-w-xs"
+              />
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Recipe link</label>
