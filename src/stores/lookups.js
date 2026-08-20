@@ -5,6 +5,7 @@ export const useLookupsStore = defineStore('lookups', {
   state: () => ({
     proteins: [],
     styles: [],
+    attributes: [],
     loading: false,
   }),
   actions: {
@@ -18,10 +19,15 @@ export const useLookupsStore = defineStore('lookups', {
       this.styles = data.data ?? data
       return this.styles
     },
+    async fetchAttributes() {
+      const { data } = await api.get('/attributes')
+      this.attributes = data.data ?? data
+      return this.attributes
+    },
     async fetchAll() {
       this.loading = true
       try {
-        await Promise.all([this.fetchProteins(), this.fetchStyles()])
+        await Promise.all([this.fetchProteins(), this.fetchStyles(), this.fetchAttributes()])
       } finally {
         this.loading = false
       }

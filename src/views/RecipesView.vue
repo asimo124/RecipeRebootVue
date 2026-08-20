@@ -20,6 +20,7 @@ const form = reactive({
   recipe_link: '',
   image_path: '',
   ingredients: [],
+  attributes: [],
 })
 
 const isEditing = computed(() => form.id != null)
@@ -42,6 +43,7 @@ function resetForm() {
   form.recipe_link = ''
   form.image_path = ''
   form.ingredients = []
+  form.attributes = []
 }
 
 function openCreate() {
@@ -61,6 +63,7 @@ async function openEdit(row) {
   form.recipe_link = full.recipe_link || ''
   form.image_path = full.image_path || ''
   form.ingredients = [...(full.ingredients || [])]
+  form.attributes = [...(full.attributes || [])]
   showModal.value = true
 }
 
@@ -78,6 +81,18 @@ function removeIngredient(id) {
   form.ingredients = form.ingredients.filter((i) => i.id !== id)
 }
 
+function isAttributeSelected(id) {
+  return form.attributes.some((a) => a.id === id)
+}
+
+function toggleAttribute(attribute) {
+  if (isAttributeSelected(attribute.id)) {
+    form.attributes = form.attributes.filter((a) => a.id !== attribute.id)
+    return
+  }
+  form.attributes.push(attribute)
+}
+
 async function save() {
   if (!form.title.trim()) return
   saving.value = true
@@ -91,6 +106,7 @@ async function save() {
       recipe_link: form.recipe_link || null,
       image_path: form.image_path || null,
       ingredient_ids: form.ingredients.map((i) => i.id),
+      attribute_ids: form.attributes.map((a) => a.id),
     }
     if (isEditing.value) {
       await recipes.update(form.id, payload)
@@ -312,6 +328,27 @@ async function removeRecipe(id) {
                 class="bg-white dark:bg-dark-2 border-neutral-200 dark:border-neutral-500 rounded-lg w-full"
                 placeholder="https://"
               />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Attributes</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label
+                  v-for="attr in lookups.attributes"
+                  :key="attr.id"
+                  class="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 dark:border-neutral-600 px-3 py-2 cursor-pointer"
+                >
+                  <span class="inline-flex items-center gap-2 min-w-0">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      :checked="isAttributeSelected(attr.id)"
+                      @change="toggleAttribute(attr)"
+                    />
+                    <span class="break-words">{{ attr.title }}</span>
+                  </span>
+                  <span class="text-xs text-neutral-500 shrink-0">L{{ attr.severity_level }}</span>
+                </label>
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium mb-2">Ingredients</label>
