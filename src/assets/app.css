@@ -134,3 +134,28 @@ body.sidebar-open {
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Recipe list severity highlighting */
+.table.bordered-table tbody tr.recipe-row--severity-2 > td {
+  background-color: #dbeafe;
+}
+
+.table.bordered-table tbody tr.recipe-row--severity-3 > td {
+  background-color: #fecaca;
+}
+
+.mobile-card-item.recipe-row--severity-2 {
+  background-color: #dbeafe;
+}
+
+.mobile-card-item.recipe-row--severity-3 {
+  background-color: #fecaca;
+}
+
+.dark .mobile-card-item.recipe-row--severity-2 {
+  background-color: rgb(30 58 138 / 0.35);
+}
+
+.dark .mobile-card-item.recipe-row--severity-3 {
+  background-color: rgb(127 29 29 / 0.35);
+}

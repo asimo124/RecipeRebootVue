@@ -120,6 +120,12 @@ async function removeRecipe(id) {
   if (!confirm('Delete this recipe?')) return
   await recipes.remove(id)
 }
+
+function severityRowClass(maxSeverity) {
+  if (maxSeverity === 3) return 'recipe-row--severity-3'
+  if (maxSeverity === 2) return 'recipe-row--severity-2'
+  return ''
+}
 </script>
 
 <template>
@@ -149,29 +155,22 @@ async function removeRecipe(id) {
                   <th>Title</th>
                   <th>Protein</th>
                   <th>Style</th>
-                  <th>Gluten</th>
+                  <th>Severity</th>
                   <th>Last Made</th>
                   <th>Link</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="row in recipes.items" :key="row.id">
+                <tr
+                  v-for="row in recipes.items"
+                  :key="row.id"
+                  :class="severityRowClass(row.max_severity)"
+                >
                   <td class="font-medium">{{ row.title }}</td>
                   <td>{{ row.protein?.title || '—' }}</td>
                   <td>{{ row.style?.title || '—' }}</td>
-                  <td>
-                    <span
-                      class="px-3 py-1 rounded-full text-sm font-medium"
-                      :class="
-                        row.contains_gluten
-                          ? 'bg-warning-100 text-warning-600'
-                          : 'bg-success-100 text-success-600'
-                      "
-                    >
-                      {{ row.contains_gluten ? 'Yes' : 'No' }}
-                    </span>
-                  </td>
+                  <td>{{ row.max_severity ?? '—' }}</td>
                   <td>{{ row.last_date_made || '—' }}</td>
                   <td>
                     <a
@@ -210,12 +209,17 @@ async function removeRecipe(id) {
 
           <!-- Mobile cards -->
           <div class="mobile-only mobile-card-list">
-            <div v-for="row in recipes.items" :key="row.id" class="mobile-card-item">
+            <div
+              v-for="row in recipes.items"
+              :key="row.id"
+              class="mobile-card-item"
+              :class="severityRowClass(row.max_severity)"
+            >
               <div class="mobile-card-item__title">{{ row.title }}</div>
               <div class="mobile-card-item__meta">
                 <span>{{ row.protein?.title || 'No protein' }}</span>
                 <span>{{ row.style?.title || 'No style' }}</span>
-                <span>{{ row.contains_gluten ? 'Gluten' : 'Gluten-free' }}</span>
+                <span>Severity {{ row.max_severity ?? '—' }}</span>
                 <span v-if="row.last_date_made">Made {{ row.last_date_made }}</span>
               </div>
               <div class="mobile-card-item__actions">
