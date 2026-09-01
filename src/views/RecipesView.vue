@@ -32,24 +32,95 @@ const form = reactive({
 
 const isEditing = computed(() => form.id != null)
 
-const ingredientOptions = computed(() =>
-  [...ingredients.items].sort((a, b) => {
-    const countCmp = Number(b.recipe_count ?? 0) - Number(a.recipe_count ?? 0)
-    if (countCmp !== 0) return countCmp
-    return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' })
-  }),
-)
+const ingredientById = computed(() => {
+  const map = new Map()
+  for (const item of ingredients.items) {
+    map.set(item.id, item)
+    for (const parent of item.parents || []) {
+      if (!map.has(parent.id)) map.set(parent.id, parent)
+    }
+  }
+  for (const recipe of recipes.items) {
+    for (const ing of recipe.ingredients || []) {
+      if (!map.has(ing.id)) map.set(ing.id, ing)
+      for (const parent of ing.parents || []) {
+        if (!map.has(parent.id)) map.set(parent.id, parent)
+      }
+    }
+  }
+  return map
+})
+
+function ancestorIds(ingredientId) {
+  const ids = new Set()
+  const queue = [ingredientId]
+  while (queue.length) {
+    const id = queue.shift()
+    if (ids.has(id)) continue
+    ids.add(id)
+    const item = ingredientById.value.get(id)
+    for (const parent of item?.parents || []) {
+      queue.push(parent.id)
+    }
+  }
+  return ids
+}
+
+function recipeHasFilterIngredient(recipe, filterId) {
+  return (recipe.ingredients || []).some((ing) => ancestorIds(ing.id).has(filterId))
+}
+
+const matchingCountByIngredientId = computed(() => {
+  const counts = new Map()
+  for (const recipe of recipes.items) {
+    const matched = new Set()
+    for (const ing of recipe.ingredients || []) {
+      for (const id of ancestorIds(ing.id)) {
+        matched.add(id)
+      }
+    }
+    for (const id of matched) {
+      counts.set(id, (counts.get(id) || 0) + 1)
+    }
+  }
+  return counts
+})
+
+const ingredientOptions = computed(() => {
+  const optionIds = new Set()
+  for (const recipe of recipes.items) {
+    for (const ing of recipe.ingredients || []) {
+      const full = ingredientById.value.get(ing.id) || ing
+      const parents = full.parents || []
+      if (parents.length) {
+        for (const parent of parents) optionIds.add(parent.id)
+      } else {
+        optionIds.add(ing.id)
+      }
+    }
+  }
+
+  return [...optionIds]
+    .map((id) => ingredientById.value.get(id))
+    .filter(Boolean)
+    .sort((a, b) => {
+      const countCmp =
+        (matchingCountByIngredientId.value.get(b.id) || 0) -
+        (matchingCountByIngredientId.value.get(a.id) || 0)
+      if (countCmp !== 0) return countCmp
+      return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' })
+    })
+})
 
 const filteredRecipes = computed(() => {
   const ids = selectedIngredientIds.value
   if (!ids.length) return recipes.items
 
   return recipes.items.filter((recipe) => {
-    const recipeIds = new Set((recipe.ingredients || []).map((ing) => ing.id))
     if (ingredientMatch.value === 'all') {
-      return ids.every((id) => recipeIds.has(id))
+      return ids.every((id) => recipeHasFilterIngredient(recipe, id))
     }
-    return ids.some((id) => recipeIds.has(id))
+    return ids.some((id) => recipeHasFilterIngredient(recipe, id))
   })
 })
 
@@ -57,8 +128,9 @@ const ingredientFilterSummary = computed(() => {
   const count = selectedIngredientIds.value.length
   if (!count) return 'Any ingredient'
   if (count === 1) {
-    const selected = ingredients.items.find((item) => item.id === selectedIngredientIds.value[0])
-    return selected ? `${selected.title} (${selected.recipe_count ?? 0})` : '1 selected'
+    const selected = ingredientById.value.get(selectedIngredientIds.value[0])
+    const matchCount = matchingCountByIngredientId.value.get(selectedIngredientIds.value[0]) ?? 0
+    return selected ? `${selected.title} (${matchCount})` : '1 selected'
   }
   return `${count} selected`
 })
@@ -95,7 +167,7 @@ function toggleIngredientFilter(id) {
 }
 
 function ingredientOptionLabel(item) {
-  return `${item.title} (${item.recipe_count ?? 0})`
+  return `${item.title} (${matchingCountByIngredientId.value.get(item.id) ?? 0})`
 }
 
 function resetForm() {
