@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '../layouts/AppLayout.vue'
 import RecipesView from '../views/RecipesView.vue'
 import InventoryView from '../views/InventoryView.vue'
+import IngredientsView from '../views/IngredientsView.vue'
 import ProteinsView from '../views/ProteinsView.vue'
 import MealStylesView from '../views/MealStylesView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -23,6 +24,7 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/recipes' },
         { path: 'recipes', name: 'recipes', component: RecipesView },
+        { path: 'ingredients', name: 'ingredients', component: IngredientsView },
         { path: 'inventory', name: 'inventory', component: InventoryView },
         { path: 'proteins', name: 'proteins', component: ProteinsView },
         { path: 'meal-styles', name: 'meal-styles', component: MealStylesView },

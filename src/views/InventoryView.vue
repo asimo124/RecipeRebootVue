@@ -1,20 +1,35 @@
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AppBreadcrumb from '../components/AppBreadcrumb.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 import IngredientPicker from '../components/IngredientPicker.vue'
 import { useInventoryStore } from '../stores/inventory'
 
 const inventory = useInventoryStore()
+const pendingRemoveId = ref(null)
+
+const sortedItems = computed(() =>
+  [...inventory.items].sort((a, b) =>
+    (a.ingredient?.title || '').localeCompare(b.ingredient?.title || '', undefined, {
+      sensitivity: 'base',
+    }),
+  ),
+)
 
 onMounted(() => inventory.fetchAll())
 
 async function onPick(ingredient) {
   await inventory.add(ingredient.id)
-  await inventory.fetchAll()
 }
 
-async function removeItem(id) {
-  if (!confirm('Remove from inventory?')) return
+function removeItem(id) {
+  pendingRemoveId.value = id
+}
+
+async function confirmRemove() {
+  const id = pendingRemoveId.value
+  pendingRemoveId.value = null
+  if (id == null) return
   await inventory.remove(id)
 }
 </script>
@@ -44,7 +59,7 @@ async function removeItem(id) {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in inventory.items" :key="item.id">
+                <tr v-for="item in sortedItems" :key="item.id">
                   <td class="font-medium">{{ item.ingredient?.title }}</td>
                   <td>{{ item.ingredient?.type?.title || '—' }}</td>
                   <td>
@@ -57,7 +72,7 @@ async function removeItem(id) {
                     </button>
                   </td>
                 </tr>
-                <tr v-if="!inventory.items.length">
+                <tr v-if="!sortedItems.length">
                   <td colspan="3" class="text-neutral-500">Pantry is empty.</td>
                 </tr>
               </tbody>
@@ -65,7 +80,7 @@ async function removeItem(id) {
           </div>
 
           <div class="mobile-only mobile-card-list">
-            <div v-for="item in inventory.items" :key="item.id" class="mobile-card-item">
+            <div v-for="item in sortedItems" :key="item.id" class="mobile-card-item">
               <div class="mobile-card-item__title">{{ item.ingredient?.title }}</div>
               <div class="mobile-card-item__meta">
                 <span>{{ item.ingredient?.type?.title || 'Untyped' }}</span>
@@ -80,10 +95,20 @@ async function removeItem(id) {
                 </button>
               </div>
             </div>
-            <p v-if="!inventory.items.length" class="text-neutral-500 mb-0">Pantry is empty.</p>
+            <p v-if="!sortedItems.length" class="text-neutral-500 mb-0">Pantry is empty.</p>
           </div>
         </template>
       </div>
     </div>
+
+    <ConfirmModal
+      :show="pendingRemoveId != null"
+      title="Remove from pantry"
+      message="Remove this ingredient from inventory?"
+      confirm-label="Remove"
+      danger
+      @confirm="confirmRemove"
+      @cancel="pendingRemoveId = null"
+    />
   </div>
 </template>

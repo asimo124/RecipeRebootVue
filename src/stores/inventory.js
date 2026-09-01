@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia'
 import api from '../api/client'
 
+function sortByIngredientTitle(items) {
+  return [...items].sort((a, b) =>
+    (a.ingredient?.title || '').localeCompare(b.ingredient?.title || '', undefined, {
+      sensitivity: 'base',
+    }),
+  )
+}
+
 export const useInventoryStore = defineStore('inventory', {
   state: () => ({
     items: [],
@@ -13,7 +21,7 @@ export const useInventoryStore = defineStore('inventory', {
       this.error = null
       try {
         const { data } = await api.get('/inventory')
-        this.items = data.data ?? data
+        this.items = sortByIngredientTitle(data.data ?? data)
       } catch (e) {
         this.error = e.message
         throw e
@@ -24,9 +32,8 @@ export const useInventoryStore = defineStore('inventory', {
     async add(ingredientId) {
       const { data } = await api.post('/inventory', { ingredient_id: ingredientId })
       const item = data.data ?? data
-      if (!this.items.find((i) => i.id === item.id)) {
-        this.items.push(item)
-      }
+      const without = this.items.filter((i) => i.id !== item.id)
+      this.items = sortByIngredientTitle([...without, item])
       return item
     },
     async remove(id) {

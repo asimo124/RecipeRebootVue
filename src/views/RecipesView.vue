@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppBreadcrumb from '../components/AppBreadcrumb.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 import IngredientPicker from '../components/IngredientPicker.vue'
 import { useRecipesStore } from '../stores/recipes'
 import { useLookupsStore } from '../stores/lookups'
@@ -10,6 +11,7 @@ const lookups = useLookupsStore()
 
 const showModal = ref(false)
 const saving = ref(false)
+const pendingDeleteId = ref(null)
 const form = reactive({
   id: null,
   title: '',
@@ -116,8 +118,14 @@ async function save() {
   }
 }
 
-async function removeRecipe(id) {
-  if (!confirm('Delete this recipe?')) return
+function removeRecipe(id) {
+  pendingDeleteId.value = id
+}
+
+async function confirmRemoveRecipe() {
+  const id = pendingDeleteId.value
+  pendingDeleteId.value = null
+  if (id == null) return
   await recipes.remove(id)
 }
 
@@ -383,5 +391,15 @@ function severityRowClass(maxSeverity) {
         </div>
       </div>
     </Teleport>
+
+    <ConfirmModal
+      :show="pendingDeleteId != null"
+      title="Delete recipe"
+      message="Delete this recipe?"
+      confirm-label="Delete"
+      danger
+      @confirm="confirmRemoveRecipe"
+      @cancel="pendingDeleteId = null"
+    />
   </div>
 </template>

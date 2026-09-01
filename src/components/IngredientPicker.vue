@@ -63,7 +63,7 @@ function onBlur() {
         @blur="onBlur"
         @keydown.enter.prevent="createNew"
       />
-      <span class="icon absolute top-1/2 left-0 text-lg flex -translate-y-1/2 ps-3">
+      <span class="icon">
         <iconify-icon icon="ion:search-outline"></iconify-icon>
       </span>
     </div>
