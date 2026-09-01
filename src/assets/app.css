@@ -161,49 +161,7 @@ body.confirm-modal-open {
   background-color: rgb(127 29 29 / 0.35);
 }
 
-.ingredient-type-choices {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.ingredient-type-choice {
-  min-height: 2.75rem;
-  padding: 0.75rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.3;
-  font-weight: 500;
-  text-align: center;
-  border: 1px solid rgb(209 213 219);
-  border-radius: 0.75rem;
-  background: #fff;
-  color: inherit;
-}
-
-.ingredient-type-choice.is-selected {
-  border-color: rgb(37 99 235);
-  background: rgb(239 246 255);
-  color: rgb(29 78 216);
-}
-
-.dark .ingredient-type-choice {
-  border-color: rgb(107 114 128);
-  background: rgb(55 65 81);
-}
-
-.dark .ingredient-type-choice.is-selected {
-  border-color: rgb(96 165 250);
-  background: rgb(30 58 138 / 0.45);
-  color: rgb(191 219 254);
-}
-
 @media (max-width: 767px) {
-  .ingredient-type-choice {
-    min-height: 3.25rem;
-    font-size: 1.125rem;
-    padding: 0.875rem 1rem;
-  }
-
   .recipe-modal-panel .form-select,
   .recipe-modal-panel input[type='text'],
   .recipe-modal-panel input[type='search'] {
@@ -263,7 +221,7 @@ body.confirm-modal-open {
 
 .ingredients-filters__field,
 .ingredients-filters .form-select,
-.ingredients-filters input {
+.ingredients-filters input:not([type='checkbox']) {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -332,10 +290,6 @@ body.confirm-modal-open {
   margin-bottom: 0.75rem;
 }
 
-.ingredient-batch-dock .ingredient-type-choices {
-  margin: 0;
-}
-
 .ingredient-select-col .form-check-input,
 .mobile-card-item .form-check-input {
   width: 1.125rem;
@@ -357,4 +311,85 @@ body.confirm-modal-open {
   width: 100%;
   max-width: 22rem;
   z-index: 1201;
+}
+
+.recipe-filters {
+  flex-wrap: wrap;
+}
+
+.recipe-ingredient-filter {
+  position: relative;
+  z-index: 40;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.recipe-match-filter {
+  flex: 1 1 8rem;
+  position: relative;
+  z-index: 1;
+}
+
+.recipe-ingredient-filter__button {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.recipe-ingredient-filter__menu {
+  position: absolute;
+  z-index: 41;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+  border: 1px solid rgb(209 213 219);
+  border-radius: 0.5rem;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+}
+
+.dark .recipe-ingredient-filter__menu {
+  border-color: rgb(75 85 99);
+  background: rgb(55 65 81);
+}
+
+.recipe-ingredient-filter__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1.3;
+  margin-bottom: 0;
+}
+
+.recipe-ingredient-filter__option .form-check-input {
+  flex: 0 0 1.125rem;
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  max-width: 1.125rem;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  -webkit-appearance: checkbox;
+  appearance: auto;
+}
+
+.recipe-ingredient-filter__option span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.recipe-ingredient-filter__option:hover {
+  background: rgb(243 244 246);
+}
+
+.dark .recipe-ingredient-filter__option:hover {
+  background: rgb(75 85 99);
 }

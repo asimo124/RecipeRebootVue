@@ -1,17 +1,23 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import AppBreadcrumb from '../components/AppBreadcrumb.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import IngredientPicker from '../components/IngredientPicker.vue'
 import { useRecipesStore } from '../stores/recipes'
 import { useLookupsStore } from '../stores/lookups'
+import { useIngredientsStore } from '../stores/ingredients'
 
 const recipes = useRecipesStore()
 const lookups = useLookupsStore()
+const ingredients = useIngredientsStore()
 
 const showModal = ref(false)
 const saving = ref(false)
 const pendingDeleteId = ref(null)
+const selectedIngredientIds = ref([])
+const ingredientMatch = ref('any')
+const ingredientMenuOpen = ref(false)
+const ingredientFilterEl = ref(null)
 const form = reactive({
   id: null,
   title: '',
@@ -26,13 +32,71 @@ const form = reactive({
 
 const isEditing = computed(() => form.id != null)
 
+const ingredientOptions = computed(() =>
+  [...ingredients.items].sort((a, b) => {
+    const countCmp = Number(b.recipe_count ?? 0) - Number(a.recipe_count ?? 0)
+    if (countCmp !== 0) return countCmp
+    return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' })
+  }),
+)
+
+const filteredRecipes = computed(() => {
+  const ids = selectedIngredientIds.value
+  if (!ids.length) return recipes.items
+
+  return recipes.items.filter((recipe) => {
+    const recipeIds = new Set((recipe.ingredients || []).map((ing) => ing.id))
+    if (ingredientMatch.value === 'all') {
+      return ids.every((id) => recipeIds.has(id))
+    }
+    return ids.some((id) => recipeIds.has(id))
+  })
+})
+
+const ingredientFilterSummary = computed(() => {
+  const count = selectedIngredientIds.value.length
+  if (!count) return 'Any ingredient'
+  if (count === 1) {
+    const selected = ingredients.items.find((item) => item.id === selectedIngredientIds.value[0])
+    return selected ? `${selected.title} (${selected.recipe_count ?? 0})` : '1 selected'
+  }
+  return `${count} selected`
+})
+
 watch(showModal, (open) => {
   document.body.classList.toggle('modal-open', open)
 })
 
 onMounted(async () => {
-  await Promise.all([recipes.fetchAll(), lookups.fetchAll()])
+  document.addEventListener('mousedown', onDocumentMouseDown)
+  await Promise.all([recipes.fetchAll(), lookups.fetchAll(), ingredients.fetchAll()])
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocumentMouseDown)
+})
+
+function onDocumentMouseDown(event) {
+  if (!ingredientMenuOpen.value) return
+  if (ingredientFilterEl.value?.contains(event.target)) return
+  ingredientMenuOpen.value = false
+}
+
+function isIngredientFiltered(id) {
+  return selectedIngredientIds.value.includes(id)
+}
+
+function toggleIngredientFilter(id) {
+  if (selectedIngredientIds.value.includes(id)) {
+    selectedIngredientIds.value = selectedIngredientIds.value.filter((selected) => selected !== id)
+    return
+  }
+  selectedIngredientIds.value = [...selectedIngredientIds.value, id]
+}
+
+function ingredientOptionLabel(item) {
+  return `${item.title} (${item.recipe_count ?? 0})`
+}
 
 function resetForm() {
   form.id = null
@@ -141,15 +205,61 @@ function severityRowClass(maxSeverity) {
     <AppBreadcrumb page-title="Recipes" active-page="Recipes" />
 
     <div class="card border-0">
-      <div class="card-header flex flex-wrap items-center justify-between gap-3">
-        <p class="mb-0 text-neutral-500">{{ recipes.items.length }} recipes</p>
-        <button
-          type="button"
-          class="btn btn-sm text-white bg-primary-600 hover:bg-primary-700 flex items-center gap-2"
-          @click="openCreate"
-        >
-          <i class="ri-add-line"></i> Add Recipe
-        </button>
+      <div class="card-header flex flex-col gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="mb-0 text-neutral-500">{{ filteredRecipes.length }} recipes</p>
+          <button
+            type="button"
+            class="btn btn-sm text-white bg-primary-600 hover:bg-primary-700 flex items-center gap-2"
+            @click="openCreate"
+          >
+            <i class="ri-add-line"></i> Add Recipe
+          </button>
+        </div>
+        <div class="ingredients-filters recipe-filters">
+          <div ref="ingredientFilterEl" class="ingredients-filters__control recipe-ingredient-filter">
+            <span>Ingredient</span>
+            <button
+              type="button"
+              class="form-select ingredients-filters__field recipe-ingredient-filter__button dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500"
+              :aria-expanded="ingredientMenuOpen"
+              aria-haspopup="listbox"
+              @click="ingredientMenuOpen = !ingredientMenuOpen"
+            >
+              {{ ingredientFilterSummary }}
+            </button>
+            <div v-if="ingredientMenuOpen" class="recipe-ingredient-filter__menu" role="listbox">
+              <label
+                v-for="item in ingredientOptions"
+                :key="item.id"
+                class="recipe-ingredient-filter__option"
+              >
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  :checked="isIngredientFiltered(item.id)"
+                  @change="toggleIngredientFilter(item.id)"
+                />
+                <span>{{ ingredientOptionLabel(item) }}</span>
+              </label>
+              <p v-if="!ingredientOptions.length" class="mb-0 text-neutral-500 px-3 py-2">
+                No ingredients yet.
+              </p>
+            </div>
+          </div>
+          <label class="ingredients-filters__control ingredients-filters__dir recipe-match-filter">
+            <span>Match</span>
+            <select
+              v-model="ingredientMatch"
+              class="form-select ingredients-filters__field dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500"
+              @mousedown="ingredientMenuOpen = false"
+              @focus="ingredientMenuOpen = false"
+            >
+              <option value="any">Any</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+        </div>
       </div>
       <div class="card-body">
         <p v-if="recipes.loading" class="text-neutral-500">Loading…</p>
@@ -171,7 +281,7 @@ function severityRowClass(maxSeverity) {
               </thead>
               <tbody>
                 <tr
-                  v-for="row in recipes.items"
+                  v-for="row in filteredRecipes"
                   :key="row.id"
                   :class="severityRowClass(row.max_severity)"
                 >
@@ -211,6 +321,11 @@ function severityRowClass(maxSeverity) {
                     </div>
                   </td>
                 </tr>
+                <tr v-if="!filteredRecipes.length">
+                  <td colspan="7" class="text-neutral-500">
+                    {{ recipes.items.length ? 'No recipes match these ingredients.' : 'No recipes yet.' }}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -218,7 +333,7 @@ function severityRowClass(maxSeverity) {
           <!-- Mobile cards -->
           <div class="mobile-only mobile-card-list">
             <div
-              v-for="row in recipes.items"
+              v-for="row in filteredRecipes"
               :key="row.id"
               class="mobile-card-item"
               :class="severityRowClass(row.max_severity)"
@@ -256,7 +371,9 @@ function severityRowClass(maxSeverity) {
                 </button>
               </div>
             </div>
-            <p v-if="!recipes.items.length" class="text-neutral-500 mb-0">No recipes yet.</p>
+            <p v-if="!filteredRecipes.length" class="text-neutral-500 mb-0">
+              {{ recipes.items.length ? 'No recipes match these ingredients.' : 'No recipes yet.' }}
+            </p>
           </div>
         </template>
       </div>

@@ -10,7 +10,7 @@ const isMobileOpen = ref(false)
 const navItems = [
   { name: 'recipes', to: '/recipes', label: 'Recipes', icon: 'ph-cooking-pot' },
   { name: 'ingredients', to: '/ingredients', label: 'Ingredients', icon: 'ph-carrot' },
-  { name: 'inventory', to: '/inventory', label: 'Inventory', icon: 'ph-fridge' },
+  { name: 'inventory', to: '/inventory', label: 'Inventory', icon: 'ph-warehouse' },
   { name: 'proteins', to: '/proteins', label: 'Proteins', icon: 'ph-fish' },
   { name: 'meal-styles', to: '/meal-styles', label: 'Meal Styles', icon: 'ph-globe-hemisphere-west' },
 ]

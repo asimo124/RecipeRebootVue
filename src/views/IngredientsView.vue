@@ -57,6 +57,14 @@ const filtered = computed(() => {
         if (typeCmp !== 0) return typeCmp
         return compareNullable(a.title, b.title, 'asc')
       }
+      if (sortBy.value === 'recipes') {
+        const aCount = Number(a.recipe_count ?? 0)
+        const bCount = Number(b.recipe_count ?? 0)
+        const countCmp = aCount - bCount
+        const ordered = dir === 'asc' ? countCmp : -countCmp
+        if (ordered !== 0) return ordered
+        return compareNullable(a.title, b.title, 'asc')
+      }
       return compareNullable(a.title, b.title, dir)
     })
 })
@@ -136,13 +144,6 @@ function parentLabels(item) {
   return parents.map((p) => p.title).join(', ')
 }
 
-function isTypeSelected(typeId) {
-  if (typeId === '' || typeId == null) {
-    return form.ingredient_type_id === '' || form.ingredient_type_id == null
-  }
-  return String(form.ingredient_type_id) === String(typeId)
-}
-
 function isSelected(id) {
   return selectedIds.value.includes(id)
 }
@@ -167,13 +168,6 @@ function toggleSelectAll() {
 function clearSelection() {
   selectedIds.value = []
   batchTypeId.value = ''
-}
-
-function isBatchTypeSelected(typeId) {
-  if (typeId === '' || typeId == null) {
-    return batchTypeId.value === '' || batchTypeId.value == null
-  }
-  return String(batchTypeId.value) === String(typeId)
 }
 
 function batchTypeLabel() {
@@ -291,6 +285,7 @@ async function removeIngredient(id) {
             >
               <option value="title">Title</option>
               <option value="type">Type</option>
+              <option value="recipes">Recipe count</option>
             </select>
           </label>
           <label class="ingredients-filters__control ingredients-filters__dir">
@@ -326,6 +321,7 @@ async function removeIngredient(id) {
                   </th>
                   <th>Title</th>
                   <th>Type</th>
+                  <th>Recipe Count</th>
                   <th>Related to</th>
                   <th>Action</th>
                 </tr>
@@ -343,6 +339,7 @@ async function removeIngredient(id) {
                   </td>
                   <td class="font-medium">{{ item.title }}</td>
                   <td>{{ item.type?.title || '—' }}</td>
+                  <td>{{ item.recipe_count ?? 0 }}</td>
                   <td>{{ parentLabels(item) }}</td>
                   <td>
                     <div class="flex items-center gap-2">
@@ -364,7 +361,7 @@ async function removeIngredient(id) {
                   </td>
                 </tr>
                 <tr v-if="!filtered.length">
-                  <td colspan="5" class="text-neutral-500">No ingredients yet.</td>
+                  <td colspan="6" class="text-neutral-500">No ingredients yet.</td>
                 </tr>
               </tbody>
             </table>
@@ -397,6 +394,7 @@ async function removeIngredient(id) {
                   <div class="mobile-card-item__title">{{ item.title }}</div>
                   <div class="mobile-card-item__meta">
                     <span>{{ item.type?.title || 'Untyped' }}</span>
+                    <span>{{ item.recipe_count ?? 0 }} recipe{{ item.recipe_count === 1 ? '' : 's' }}</span>
                     <span v-if="item.parents?.length">Related: {{ parentLabels(item) }}</span>
                   </div>
                   <div class="mobile-card-item__actions">
@@ -453,27 +451,16 @@ async function removeIngredient(id) {
               />
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Type</label>
-              <div class="ingredient-type-choices" role="radiogroup" aria-label="Ingredient type">
-                <button
-                  type="button"
-                  class="ingredient-type-choice"
-                  :class="{ 'is-selected': isTypeSelected('') }"
-                  @click="form.ingredient_type_id = ''"
-                >
-                  None
-                </button>
-                <button
-                  v-for="type in ingredients.types"
-                  :key="type.id"
-                  type="button"
-                  class="ingredient-type-choice"
-                  :class="{ 'is-selected': isTypeSelected(type.id) }"
-                  @click="form.ingredient_type_id = type.id"
-                >
+              <label class="block text-sm font-medium mb-1">Type</label>
+              <select
+                v-model="form.ingredient_type_id"
+                class="form-select dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500 w-full"
+              >
+                <option value="">None</option>
+                <option v-for="type in ingredients.types" :key="type.id" :value="type.id">
                   {{ type.title }}
-                </button>
-              </div>
+                </option>
+              </select>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Related to (more general)</label>
@@ -549,26 +536,18 @@ async function removeIngredient(id) {
             </button>
           </div>
         </div>
-        <div class="ingredient-type-choices" role="radiogroup" aria-label="Batch ingredient type">
-          <button
-            type="button"
-            class="ingredient-type-choice"
-            :class="{ 'is-selected': isBatchTypeSelected('') }"
-            @click="batchTypeId = ''"
+        <label class="block">
+          <span class="block text-sm font-medium mb-1">Type</span>
+          <select
+            v-model="batchTypeId"
+            class="form-select dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500 w-full"
           >
-            None
-          </button>
-          <button
-            v-for="type in ingredients.types"
-            :key="type.id"
-            type="button"
-            class="ingredient-type-choice"
-            :class="{ 'is-selected': isBatchTypeSelected(type.id) }"
-            @click="batchTypeId = type.id"
-          >
-            {{ type.title }}
-          </button>
-        </div>
+            <option value="">None</option>
+            <option v-for="type in ingredients.types" :key="type.id" :value="type.id">
+              {{ type.title }}
+            </option>
+          </select>
+        </label>
       </div>
     </Teleport>
   </div>
