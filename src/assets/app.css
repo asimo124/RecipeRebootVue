@@ -229,24 +229,62 @@ body.confirm-modal-open {
 .ingredients-filters {
   display: flex;
   flex-wrap: wrap;
-  align-items: stretch;
+  align-items: flex-end;
   gap: 0.5rem;
+}
+
+.ingredients-filters__control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.ingredients-filters__control > span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .ingredients-filters__search {
   flex: 1 1 16rem;
-  min-width: 0;
 }
 
-.ingredients-filters__search input {
+.ingredients-filters__type,
+.ingredients-filters__sort,
+.ingredients-filters__dir {
+  flex: 1 1 8rem;
+}
+
+.ingredients-filters .icon-field {
+  position: relative;
+  height: 2.75rem;
+}
+
+.ingredients-filters__field,
+.ingredients-filters .form-select,
+.ingredients-filters input {
+  box-sizing: border-box;
   width: 100%;
-  min-width: 0;
+  max-width: 100%;
+  height: 2.75rem;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.25;
 }
 
-.ingredients-filters .ingredients-filters__type {
-  flex: 1 1 12rem;
-  width: 12rem;
-  max-width: 100%;
+.ingredients-filters input[type='search'] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ingredients-filters .icon-field .icon {
+  top: 0;
+  bottom: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ingredient-select-col {
@@ -254,16 +292,48 @@ body.confirm-modal-open {
   vertical-align: middle;
 }
 
-.ingredient-batch-bar {
-  border: 1px solid rgb(209 213 219);
-  border-radius: 0.75rem;
-  padding: 0.75rem;
-  background: rgb(249 250 251);
+.has-ingredient-batch-dock {
+  padding-bottom: 11rem;
 }
 
-.dark .ingredient-batch-bar {
-  border-color: rgb(75 85 99);
-  background: rgb(55 65 81 / 0.5);
+.ingredient-batch-dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid rgb(209 213 219);
+  background: #fff;
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 0.12);
+}
+
+.dark .ingredient-batch-dock {
+  border-top-color: rgb(75 85 99);
+  background: rgb(31 41 55);
+}
+
+@media (min-width: 1200px) {
+  .ingredient-batch-dock {
+    left: calc(var(--ts-rail-w, 0px) + var(--ts-panel-w, 0px));
+  }
+
+  body.twin-collapsed .ingredient-batch-dock {
+    left: var(--ts-rail-w, 0px);
+  }
+}
+
+.ingredient-batch-dock__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ingredient-batch-dock .ingredient-type-choices {
+  margin: 0;
 }
 
 .ingredient-select-col .form-check-input,

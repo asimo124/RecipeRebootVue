@@ -9,6 +9,8 @@ const ingredients = useIngredientsStore()
 
 const search = ref('')
 const typeFilter = ref('')
+const sortBy = ref('title')
+const sortDir = ref('asc')
 const showModal = ref(false)
 const saving = ref(false)
 const selectedIds = ref([])
@@ -25,8 +27,19 @@ const form = reactive({
 
 const isEditing = computed(() => form.id != null)
 
+function compareNullable(a, b, dir) {
+  const aEmpty = a == null || a === ''
+  const bEmpty = b == null || b === ''
+  if (aEmpty && bEmpty) return 0
+  if (aEmpty) return dir === 'asc' ? -1 : 1
+  if (bEmpty) return dir === 'asc' ? 1 : -1
+  const cmp = a.localeCompare(b, undefined, { sensitivity: 'base' })
+  return dir === 'asc' ? cmp : -cmp
+}
+
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
+  const dir = sortDir.value
   return ingredients.items
     .filter((item) => {
       if (typeFilter.value && String(item.ingredient_type_id) !== String(typeFilter.value)) {
@@ -38,7 +51,14 @@ const filtered = computed(() => {
       return true
     })
     .slice()
-    .sort((a, b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }))
+    .sort((a, b) => {
+      if (sortBy.value === 'type') {
+        const typeCmp = compareNullable(a.type?.title, b.type?.title, dir)
+        if (typeCmp !== 0) return typeCmp
+        return compareNullable(a.title, b.title, 'asc')
+      }
+      return compareNullable(a.title, b.title, dir)
+    })
 })
 
 const selectedCount = computed(() => selectedIds.value.length)
@@ -221,7 +241,7 @@ async function removeIngredient(id) {
 </script>
 
 <template>
-  <div>
+  <div :class="{ 'has-ingredient-batch-dock': selectedCount }">
     <AppBreadcrumb page-title="Ingredients" active-page="Ingredients" />
 
     <div class="card border-0">
@@ -237,63 +257,52 @@ async function removeIngredient(id) {
           </button>
         </div>
         <div class="ingredients-filters">
-          <div class="icon-field relative ingredients-filters__search">
-            <input
-              v-model="search"
-              type="search"
-              class="bg-white dark:bg-dark-2 ps-10 border-neutral-200 dark:border-neutral-500 rounded-lg w-full"
-              placeholder="Search ingredients…"
-            />
-            <span class="icon">
-              <iconify-icon icon="ion:search-outline"></iconify-icon>
-            </span>
-          </div>
-          <select
-            v-model="typeFilter"
-            class="form-select ingredients-filters__type dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500 text-base"
-          >
-            <option value="">All types</option>
-            <option v-for="type in ingredients.types" :key="type.id" :value="type.id">
-              {{ type.title }}
-            </option>
-          </select>
-        </div>
-        <div v-if="selectedCount" class="ingredient-batch-bar">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="mb-0 font-medium">{{ selectedCount }} selected</p>
-            <button type="button" class="btn btn-sm bg-neutral-200 dark:bg-neutral-600" @click="clearSelection">
-              Clear
-            </button>
-          </div>
-          <p class="mb-2 mt-3 text-sm font-medium">Set type</p>
-          <div class="ingredient-type-choices" role="radiogroup" aria-label="Batch ingredient type">
-            <button
-              type="button"
-              class="ingredient-type-choice"
-              :class="{ 'is-selected': isBatchTypeSelected('') }"
-              @click="batchTypeId = ''"
+          <label class="ingredients-filters__control ingredients-filters__search">
+            <span>Search</span>
+            <div class="icon-field">
+              <input
+                v-model="search"
+                type="search"
+                class="ingredients-filters__field bg-white dark:bg-dark-2 ps-10 border-neutral-200 dark:border-neutral-500 rounded-lg w-full"
+                placeholder="Search ingredients…"
+              />
+              <span class="icon">
+                <iconify-icon icon="ion:search-outline"></iconify-icon>
+              </span>
+            </div>
+          </label>
+          <label class="ingredients-filters__control ingredients-filters__type">
+            <span>Type</span>
+            <select
+              v-model="typeFilter"
+              class="form-select ingredients-filters__field dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500"
             >
-              None
-            </button>
-            <button
-              v-for="type in ingredients.types"
-              :key="type.id"
-              type="button"
-              class="ingredient-type-choice"
-              :class="{ 'is-selected': isBatchTypeSelected(type.id) }"
-              @click="batchTypeId = type.id"
+              <option value="">All types</option>
+              <option v-for="type in ingredients.types" :key="type.id" :value="type.id">
+                {{ type.title }}
+              </option>
+            </select>
+          </label>
+          <label class="ingredients-filters__control ingredients-filters__sort">
+            <span>Sort by</span>
+            <select
+              v-model="sortBy"
+              class="form-select ingredients-filters__field dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500"
             >
-              {{ type.title }}
-            </button>
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm text-white bg-primary-600 hover:bg-primary-700 mt-3"
-            :disabled="batchSaving"
-            @click="applyBatchType"
-          >
-            {{ batchSaving ? 'Updating…' : 'Update type' }}
-          </button>
+              <option value="title">Title</option>
+              <option value="type">Type</option>
+            </select>
+          </label>
+          <label class="ingredients-filters__control ingredients-filters__dir">
+            <span>Dir</span>
+            <select
+              v-model="sortDir"
+              class="form-select ingredients-filters__field dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500"
+            >
+              <option value="asc">Asc</option>
+              <option value="desc">Desc</option>
+            </select>
+          </label>
         </div>
       </div>
       <div class="card-body">
@@ -521,5 +530,46 @@ async function removeIngredient(id) {
       @confirm="onConfirm"
       @cancel="closeConfirm"
     />
+
+    <Teleport to="body">
+      <div v-if="selectedCount" class="ingredient-batch-dock">
+        <div class="ingredient-batch-dock__head">
+          <p class="mb-0 font-medium">{{ selectedCount }} selected</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" class="btn btn-sm bg-neutral-200 dark:bg-neutral-600" @click="clearSelection">
+              Clear
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm text-white bg-primary-600 hover:bg-primary-700"
+              :disabled="batchSaving"
+              @click="applyBatchType"
+            >
+              {{ batchSaving ? 'Updating…' : 'Update type' }}
+            </button>
+          </div>
+        </div>
+        <div class="ingredient-type-choices" role="radiogroup" aria-label="Batch ingredient type">
+          <button
+            type="button"
+            class="ingredient-type-choice"
+            :class="{ 'is-selected': isBatchTypeSelected('') }"
+            @click="batchTypeId = ''"
+          >
+            None
+          </button>
+          <button
+            v-for="type in ingredients.types"
+            :key="type.id"
+            type="button"
+            class="ingredient-type-choice"
+            :class="{ 'is-selected': isBatchTypeSelected(type.id) }"
+            @click="batchTypeId = type.id"
+          >
+            {{ type.title }}
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
