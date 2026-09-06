@@ -275,10 +275,6 @@ function severityRowClass(maxSeverity) {
   return ''
 }
 
-function recipeRowClass(row) {
-  return [severityRowClass(row.max_severity), isUsedRecently(row) ? 'recipe-row--used-recently' : '']
-}
-
 async function markUsedRecently(row) {
   if (!row?.id) return
   await recipes.setUsedRecently(row.id, !isUsedRecently(row))
@@ -368,7 +364,7 @@ async function markUsedRecently(row) {
                 <tr
                   v-for="row in filteredRecipes"
                   :key="row.id"
-                  :class="recipeRowClass(row)"
+                  :class="severityRowClass(row.max_severity)"
                 >
                   <td class="font-medium">
                     <span class="inline-flex items-center gap-2 flex-wrap">
@@ -447,7 +443,7 @@ async function markUsedRecently(row) {
               v-for="row in filteredRecipes"
               :key="row.id"
               class="mobile-card-item"
-              :class="recipeRowClass(row)"
+              :class="severityRowClass(row.max_severity)"
             >
               <div class="mobile-card-item__title">
                 <span class="inline-flex items-center gap-2 flex-wrap">
