@@ -41,6 +41,9 @@ export const useRecipesStore = defineStore('recipes', {
       this.current = recipe
       return recipe
     },
+    async setUsedRecently(id, usedRecently) {
+      return this.update(id, { used_recently: usedRecently ? 1 : 0 })
+    },
     async remove(id) {
       await api.delete(`/recipes/${id}`)
       this.items = this.items.filter((r) => r.id !== id)

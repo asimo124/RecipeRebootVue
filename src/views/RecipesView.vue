@@ -265,10 +265,23 @@ async function confirmRemoveRecipe() {
   await recipes.remove(id)
 }
 
+function isUsedRecently(row) {
+  return Boolean(row?.used_recently)
+}
+
 function severityRowClass(maxSeverity) {
   if (maxSeverity === 3) return 'recipe-row--severity-3'
   if (maxSeverity === 2) return 'recipe-row--severity-2'
   return ''
+}
+
+function recipeRowClass(row) {
+  return [severityRowClass(row.max_severity), isUsedRecently(row) ? 'recipe-row--used-recently' : '']
+}
+
+async function markUsedRecently(row) {
+  if (!row?.id) return
+  await recipes.setUsedRecently(row.id, !isUsedRecently(row))
 }
 </script>
 
@@ -355,9 +368,14 @@ function severityRowClass(maxSeverity) {
                 <tr
                   v-for="row in filteredRecipes"
                   :key="row.id"
-                  :class="severityRowClass(row.max_severity)"
+                  :class="recipeRowClass(row)"
                 >
-                  <td class="font-medium">{{ row.title }}</td>
+                  <td class="font-medium">
+                    <span class="inline-flex items-center gap-2 flex-wrap">
+                      {{ row.title }}
+                      <span v-if="isUsedRecently(row)" class="recipe-used-badge">Used recently</span>
+                    </span>
+                  </td>
                   <td>{{ row.protein?.title || '—' }}</td>
                   <td>{{ row.style?.title || '—' }}</td>
                   <td>{{ row.max_severity ?? '—' }}</td>
@@ -385,6 +403,27 @@ function severityRowClass(maxSeverity) {
                       </button>
                       <button
                         type="button"
+                        class="w-8 h-8 rounded-full inline-flex items-center justify-center"
+                        :class="isUsedRecently(row) ? 'bg-warning-600 text-white' : 'bg-warning-100 text-warning-600'"
+                        :title="isUsedRecently(row) ? 'Clear used recently' : 'Mark as used recently'"
+                        :aria-label="isUsedRecently(row) ? 'Clear used recently' : 'Mark as used recently'"
+                        @click="markUsedRecently(row)"
+                      >
+                        <i class="ri-restaurant-2-line"></i>
+                      </button>
+                      <a
+                        v-if="row.recipe_link"
+                        :href="row.recipe_link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full inline-flex items-center justify-center"
+                        title="Open recipe link"
+                        aria-label="Open recipe link"
+                      >
+                        <i class="ri-external-link-line"></i>
+                      </a>
+                      <button
+                        type="button"
                         class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center"
                         @click="removeRecipe(row.id)"
                       >
@@ -408,9 +447,14 @@ function severityRowClass(maxSeverity) {
               v-for="row in filteredRecipes"
               :key="row.id"
               class="mobile-card-item"
-              :class="severityRowClass(row.max_severity)"
+              :class="recipeRowClass(row)"
             >
-              <div class="mobile-card-item__title">{{ row.title }}</div>
+              <div class="mobile-card-item__title">
+                <span class="inline-flex items-center gap-2 flex-wrap">
+                  {{ row.title }}
+                  <span v-if="isUsedRecently(row)" class="recipe-used-badge">Used recently</span>
+                </span>
+              </div>
               <div class="mobile-card-item__meta">
                 <span>{{ row.protein?.title || 'No protein' }}</span>
                 <span>{{ row.style?.title || 'No style' }}</span>
@@ -418,15 +462,6 @@ function severityRowClass(maxSeverity) {
                 <span v-if="row.last_date_made">Made {{ row.last_date_made }}</span>
               </div>
               <div class="mobile-card-item__actions">
-                <a
-                  v-if="row.recipe_link"
-                  :href="row.recipe_link"
-                  target="_blank"
-                  rel="noopener"
-                  class="btn btn-sm bg-primary-50 text-primary-600"
-                >
-                  View link
-                </a>
                 <button
                   type="button"
                   class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center"
@@ -434,6 +469,27 @@ function severityRowClass(maxSeverity) {
                 >
                   <iconify-icon icon="lucide:edit"></iconify-icon>
                 </button>
+                <button
+                  type="button"
+                  class="w-8 h-8 rounded-full inline-flex items-center justify-center"
+                  :class="isUsedRecently(row) ? 'bg-warning-600 text-white' : 'bg-warning-100 text-warning-600'"
+                  :title="isUsedRecently(row) ? 'Clear used recently' : 'Mark as used recently'"
+                  :aria-label="isUsedRecently(row) ? 'Clear used recently' : 'Mark as used recently'"
+                  @click="markUsedRecently(row)"
+                >
+                  <i class="ri-restaurant-2-line"></i>
+                </button>
+                <a
+                  v-if="row.recipe_link"
+                  :href="row.recipe_link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full inline-flex items-center justify-center"
+                  title="Open recipe link"
+                  aria-label="Open recipe link"
+                >
+                  <i class="ri-external-link-line"></i>
+                </a>
                 <button
                   type="button"
                   class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center"
